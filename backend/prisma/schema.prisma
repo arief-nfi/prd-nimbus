@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,52 +10,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum WarehouseNodeType {
-  Warehouse
-  Aisle
-  Rack
-  Bin
+model Supplier {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  suppId     String    @unique @map("supp_id") @db.VarChar(255)
+  name       String    @db.VarChar(255)
+  picName    String    @map("pic_name") @db.VarChar(255)
+  address    String    @db.Text
+  phone      String    @db.VarChar(255)
+  status     String?   @default("Active") @db.VarChar(50)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdBy  String?   @map("created_by") @db.Uuid
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  updatedBy  String?   @map("updated_by") @db.Uuid
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz
+  deletedBy  String?   @map("deleted_by") @db.Uuid
+
+  // Relations (Placeholder for future relations based on DBML)
+  purchaseOrders PurchaseOrder[]
+
+  @@index([createdAt], name: "idx_suppliers_created_at")
+  @@index([deletedAt], name: "idx_suppliers_deleted_at")
+  @@index([createdAt, id])
+  @@map("suppliers")
 }
 
-enum InventoryMethod {
-  FIFO
-  LIFO
-  FEFO
-}
+// Minimal PurchaseOrder model to satisfy relation requirements
+model PurchaseOrder {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplierId String   @map("supplier_id") @db.Uuid
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
 
-enum EntityStatus {
-  Active
-  Inactive
-}
-
-model Warehouse {
-  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  node_id     String            @unique @db.VarChar(255)
-  name        String            @unique @db.VarChar(255)
-  parent_id   String?           @db.Uuid
-  node_type   WarehouseNodeType
-  method      InventoryMethod   @default(FIFO)
-  address     String            @db.Text
-  description String?           @db.Text
-  status      EntityStatus      @default(Active)
-
-  // Audit columns
-  created_at  DateTime          @default(now()) @db.Timestamptz
-  created_by  String?           @db.Uuid
-  updated_at  DateTime          @updatedAt @db.Timestamptz
-  updated_by  String?           @db.Uuid
-
-  // Soft delete columns
-  deleted_at  DateTime?         @db.Timestamptz
-  deleted_by  String?           @db.Uuid
-
-  // Relations
-  parent      Warehouse?        @relation("WarehouseHierarchy", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  children    Warehouse[]       @relation("WarehouseHierarchy")
-
-  @@index([parent_id], name: "idx_warehouses_parent_id")
-  @@index([created_at], name: "idx_warehouses_created_at")
-  @@index([deleted_at], name: "idx_warehouses_deleted_at")
-  @@index([created_at, id], name: "idx_warehouses_created_at_id")
-  @@map("warehouses")
+  @@map("purchase_orders")
 }
