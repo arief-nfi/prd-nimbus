@@ -1,32 +1,12 @@
-// ... existing schema content
+// ... existing schema code
 
-model PurchaseOrderLineItem {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  poId         String   @map("po_id") @db.Uuid
-  itemId       String   @map("item_id") @db.Uuid
-  quantity     Decimal  @db.Decimal(18, 2)
-  unitPrice    Decimal  @map("unit_price") @db.Decimal(18, 2)
-  totalAmount  Decimal  @map("total_amount") @db.Decimal(18, 2)
+model WarehouseNode {
+  id          String   @id @default(uuid())
+  nodeId      String   @unique
+  nodeType    String   @default("Warehouse")
+  unitPrice   Decimal  @db.Decimal(18, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  // Relations
-  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
-  item          Item          @relation(fields: [itemId], references: [id])
-
-  @@index([poId])
-  @@index([itemId])
-  @@map("purchase_order_line_items")
-}
-
-// Update PurchaseOrder model to include the relation
-model PurchaseOrder {
-  // ... existing fields
-  lineItems PurchaseOrderLineItem[]
-  // ... existing fields
-}
-
-// Update Item model to include the relation
-model Item {
-  // ... existing fields
-  purchaseOrderLineItems PurchaseOrderLineItem[]
-  // ... existing fields
+  @@map("warehouse_nodes")
 }
