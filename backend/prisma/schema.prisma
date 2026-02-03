@@ -1,85 +1,32 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model PurchaseOrder {
-  id                  String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  poId                String                      @unique @map("po_id") @db.VarChar(255)
-  poDate              DateTime                    @map("po_date") @db.Timestamptz
-  supplierId          String                      @map("supplier_id") @db.Uuid
-  distributionMethod  String                      @map("distribution_method") @db.VarChar(50)
-  warehouseId         String                      @map("warehouse_id") @db.Uuid
-  grandTotal          Decimal                     @map("grand_total") @db.Decimal(18, 2)
-  paymentMethod       String                      @map("payment_method") @db.VarChar(50)
-  status              String?                     @default("submitted") @db.VarChar(50)
-  
-  // Audit Columns
-  createdAt           DateTime                    @default(now()) @map("created_at") @db.Timestamptz
-  createdBy           String?                     @map("created_by") @db.Uuid
-  updatedAt           DateTime                    @updatedAt @map("updated_at") @db.Timestamptz
-  updatedBy           String?                     @map("updated_by") @db.Uuid
-  
-  // Soft Delete Columns
-  deletedAt           DateTime?                   @map("deleted_at") @db.Timestamptz
-  deletedBy           String?                     @map("deleted_by") @db.Uuid
-
-  // Relations
-  supplier            Supplier                    @relation(fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  warehouse           Warehouse                   @relation(fields: [warehouseId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  lineItems           PurchaseOrderLineItem[]
-  attachment          PoAttachment?
-
-  @@index([createdAt], name: "idx_purchase_orders_created_at")
-  @@index([deletedAt], name: "idx_purchase_orders_deleted_at")
-  @@index([createdAt, id])
-  @@map("purchase_orders")
-}
+// ... existing schema content
 
 model PurchaseOrderLineItem {
-  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  poId        String        @map("po_id") @db.Uuid
-  itemId      String        @map("item_id") @db.Uuid
-  quantity    Decimal       @db.Decimal(18, 2)
-  unitPrice   Decimal       @map("unit_price") @db.Decimal(18, 2)
-  totalAmount Decimal       @map("total_amount") @db.Decimal(18, 2)
-  
-  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  poId         String   @map("po_id") @db.Uuid
+  itemId       String   @map("item_id") @db.Uuid
+  quantity     Decimal  @db.Decimal(18, 2)
+  unitPrice    Decimal  @map("unit_price") @db.Decimal(18, 2)
+  totalAmount  Decimal  @map("total_amount") @db.Decimal(18, 2)
 
+  // Relations
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  item          Item          @relation(fields: [itemId], references: [id])
+
+  @@index([poId])
+  @@index([itemId])
   @@map("purchase_order_line_items")
 }
 
-model PoAttachment {
-  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  poId        String        @unique @map("po_id") @db.Uuid
-  filePath    String        @map("file_path") @db.VarChar(255)
-  fileType    String?       @map("file_type") @db.VarChar(255)
-  
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  createdBy   String?       @map("created_by") @db.Uuid
-  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz
-  updatedBy   String?       @map("updated_by") @db.Uuid
-
-  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-
-  @@index([createdAt])
-  @@index([createdAt, id])
-  @@map("po_attachments")
+// Update PurchaseOrder model to include the relation
+model PurchaseOrder {
+  // ... existing fields
+  lineItems PurchaseOrderLineItem[]
+  // ... existing fields
 }
 
-// Placeholder models to satisfy relations defined in the task requirements
-model Supplier {
-  id             String          @id @db.Uuid
-  purchaseOrders PurchaseOrder[]
-  @@map("suppliers")
-}
-
-model Warehouse {
-  id             String          @id @db.Uuid
-  purchaseOrders PurchaseOrder[]
-  @@map("warehouses")
+// Update Item model to include the relation
+model Item {
+  // ... existing fields
+  purchaseOrderLineItems PurchaseOrderLineItem[]
+  // ... existing fields
 }
