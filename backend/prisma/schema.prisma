@@ -1,44 +1,34 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Add to existing schema.prisma
 
-generator client {
-  provider = "prisma-client-js"
+enum ItemStatus {
+  Active
+  Inactive
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+model Item {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sku       String     @unique @db.VarChar(255)
+  brand     String?    @db.VarChar(255)
+  name      String     @db.VarChar(255)
+  uomId     String     @map("uom_id") @db.Uuid
+  status    ItemStatus @default(Active)
+  
+  // Audit columns
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  createdBy String?    @map("created_by") @db.Uuid
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+  updatedBy String?    @map("updated_by") @db.Uuid
+  
+  // Soft delete columns
+  deletedAt DateTime?  @map("deleted_at") @db.Timestamptz
+  deletedBy String?    @map("deleted_by") @db.Uuid
 
-model Supplier {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  suppId     String    @unique @map("supp_id") @db.VarChar(255)
-  name       String    @db.VarChar(255)
-  picName    String    @map("pic_name") @db.VarChar(255)
-  address    String    @db.Text
-  phone      String    @db.VarChar(255)
-  status     String?   @default("Active") @db.VarChar(50)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  createdBy  String?   @map("created_by") @db.Uuid
-  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-  updatedBy  String?   @map("updated_by") @db.Uuid
-  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz
-  deletedBy  String?   @map("deleted_by") @db.Uuid
+  // Relations
+  uom       Uom        @relation(fields: [uomId], references: [id], onDelete: Restrict)
+  inventories Inventory[]
 
-  // Relations (Placeholder for future relations based on DBML)
-  purchaseOrders PurchaseOrder[]
-
-  @@index([createdAt], name: "idx_suppliers_created_at")
-  @@index([deletedAt], name: "idx_suppliers_deleted_at")
-  @@index([createdAt, id])
-  @@map("suppliers")
-}
-
-// Minimal PurchaseOrder model to satisfy relation requirements
-model PurchaseOrder {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  supplierId String   @map("supplier_id") @db.Uuid
-  supplier   Supplier @relation(fields: [supplierId], references: [id])
-
-  @@map("purchase_orders")
+  @@index([uomId], name: "idx_items_uom_id")
+  @@index([createdAt], name: "idx_items_created_at")
+  @@index([deletedAt], name: "idx_items_deleted_at")
+  @@map("items")
 }
