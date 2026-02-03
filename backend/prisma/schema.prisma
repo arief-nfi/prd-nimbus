@@ -1,34 +1,52 @@
-// Add to existing schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
 
-enum ItemStatus {
-  Active
-  Inactive
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Uom {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  uomId     String    @unique @map("uom_id") @db.VarChar(255)
+  code      String    @unique @db.VarChar(255)
+  name      String    @db.VarChar(255)
+  status    String?   @default("Active") @db.VarChar(50)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  // Relations
+  items     Item[]
+
+  @@index([createdAt], name: "idx_uoms_created_at")
+  @@index([deletedAt], name: "idx_uoms_deleted_at")
+  @@map("uoms")
 }
 
 model Item {
-  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sku       String     @unique @db.VarChar(255)
-  brand     String?    @db.VarChar(255)
-  name      String     @db.VarChar(255)
-  uomId     String     @map("uom_id") @db.Uuid
-  status    ItemStatus @default(Active)
-  
-  // Audit columns
-  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
-  createdBy String?    @map("created_by") @db.Uuid
-  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz
-  updatedBy String?    @map("updated_by") @db.Uuid
-  
-  // Soft delete columns
-  deletedAt DateTime?  @map("deleted_at") @db.Timestamptz
-  deletedBy String?    @map("deleted_by") @db.Uuid
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sku       String    @unique @db.VarChar(255)
+  brand     String?   @db.VarChar(255)
+  name      String    @db.VarChar(255)
+  uomId     String    @map("uom_id") @db.Uuid
+  status    String?   @default("Active") @db.VarChar(50)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+  deletedBy String?   @map("deleted_by") @db.Uuid
 
   // Relations
-  uom       Uom        @relation(fields: [uomId], references: [id], onDelete: Restrict)
-  inventories Inventory[]
+  uom       Uom       @relation(fields: [uomId], references: [id])
 
-  @@index([uomId], name: "idx_items_uom_id")
-  @@index([createdAt], name: "idx_items_created_at")
-  @@index([deletedAt], name: "idx_items_deleted_at")
+  @@index([uomId])
+  @@index([createdAt])
+  @@index([deletedAt])
   @@map("items")
 }
