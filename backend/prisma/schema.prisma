@@ -1,35 +1,85 @@
-// Add this to the existing schema.prisma file
-
-model Inventory {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  itemId          String    @map("item_id") @db.Uuid
-  warehouseId     String    @map("warehouse_id") @db.Uuid
-  binId           String?   @map("bin_id") @db.Uuid
-  qtyOnHand       Decimal   @map("qty_on_hand") @db.Decimal(18, 2)
-  lastReceivedAt  DateTime? @map("last_received_at") @db.Timestamptz
-  lastPoId        String?   @map("last_po_id") @db.Uuid
-
-  // Relations
-  item      Item      @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-
-  @@index([itemId], name: "idx_inventories_item_id")
-  @@index([warehouseId], name: "idx_inventories_warehouse_id")
-  @@index([binId], name: "idx_inventories_bin_id")
-  @@map("inventories")
+generator client {
+  provider = "prisma-client-js"
 }
 
-// Ensure Item and Warehouse models have the relation fields
-model Item {
-  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  // ... other fields
-  inventories Inventory[]
-  @@map("items")
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model PurchaseOrder {
+  id                  String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  poId                String                      @unique @map("po_id") @db.VarChar(255)
+  poDate              DateTime                    @map("po_date") @db.Timestamptz
+  supplierId          String                      @map("supplier_id") @db.Uuid
+  distributionMethod  String                      @map("distribution_method") @db.VarChar(50)
+  warehouseId         String                      @map("warehouse_id") @db.Uuid
+  grandTotal          Decimal                     @map("grand_total") @db.Decimal(18, 2)
+  paymentMethod       String                      @map("payment_method") @db.VarChar(50)
+  status              String?                     @default("submitted") @db.VarChar(50)
+  
+  // Audit Columns
+  createdAt           DateTime                    @default(now()) @map("created_at") @db.Timestamptz
+  createdBy           String?                     @map("created_by") @db.Uuid
+  updatedAt           DateTime                    @updatedAt @map("updated_at") @db.Timestamptz
+  updatedBy           String?                     @map("updated_by") @db.Uuid
+  
+  // Soft Delete Columns
+  deletedAt           DateTime?                   @map("deleted_at") @db.Timestamptz
+  deletedBy           String?                     @map("deleted_by") @db.Uuid
+
+  // Relations
+  supplier            Supplier                    @relation(fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  warehouse           Warehouse                   @relation(fields: [warehouseId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  lineItems           PurchaseOrderLineItem[]
+  attachment          PoAttachment?
+
+  @@index([createdAt], name: "idx_purchase_orders_created_at")
+  @@index([deletedAt], name: "idx_purchase_orders_deleted_at")
+  @@index([createdAt, id])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderLineItem {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  poId        String        @map("po_id") @db.Uuid
+  itemId      String        @map("item_id") @db.Uuid
+  quantity    Decimal       @db.Decimal(18, 2)
+  unitPrice   Decimal       @map("unit_price") @db.Decimal(18, 2)
+  totalAmount Decimal       @map("total_amount") @db.Decimal(18, 2)
+  
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("purchase_order_line_items")
+}
+
+model PoAttachment {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  poId        String        @unique @map("po_id") @db.Uuid
+  filePath    String        @map("file_path") @db.VarChar(255)
+  fileType    String?       @map("file_type") @db.VarChar(255)
+  
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  createdBy   String?       @map("created_by") @db.Uuid
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  updatedBy   String?       @map("updated_by") @db.Uuid
+
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([createdAt])
+  @@index([createdAt, id])
+  @@map("po_attachments")
+}
+
+// Placeholder models to satisfy relations defined in the task requirements
+model Supplier {
+  id             String          @id @db.Uuid
+  purchaseOrders PurchaseOrder[]
+  @@map("suppliers")
 }
 
 model Warehouse {
-  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  // ... other fields
-  inventories Inventory[]
+  id             String          @id @db.Uuid
+  purchaseOrders PurchaseOrder[]
   @@map("warehouses")
 }
