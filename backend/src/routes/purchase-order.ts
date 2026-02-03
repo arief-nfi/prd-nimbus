@@ -12,10 +12,12 @@ const purchaseOrderSchema = z.object({
   distributionMethod: z.string(),
   warehouseId: z.string().uuid(),
   grandTotal: z.number(),
-  paidAmount: z.number().optional(),
+  paymentMethod: z.string(),
   status: z.string().optional(),
   createdBy: z.string().uuid().optional(),
   updatedBy: z.string().uuid().optional(),
+  deletedAt: z.string().datetime().optional(),
+  deletedBy: z.string().uuid().optional(),
 });
 
 // GET all purchase-order

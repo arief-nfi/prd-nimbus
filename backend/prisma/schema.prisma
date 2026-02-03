@@ -21,8 +21,8 @@ model Warehouse {
   description String?
   status String @default("Active")
   createdAt DateTime @map("created_at")
-  updatedAt DateTime @map("updated_at")
   createdBy String? @map("created_by")
+  updatedAt DateTime @map("updated_at")
   updatedBy String? @map("updated_by")
   deletedAt DateTime? @map("deleted_at")
   deletedBy String? @map("deleted_by")
@@ -37,7 +37,7 @@ model Supplier {
   picName String @map("pic_name")
   address String
   phone String
-  status String @default("Active")
+  status String? @default("Active")
   createdAt DateTime @map("created_at")
   createdBy String? @map("created_by")
   updatedAt DateTime @map("updated_at")
@@ -54,7 +54,7 @@ model Item {
   brand String?
   name String
   uomId String @map("uom_id")
-  status String @default("Active")
+  status String? @default("Active")
   createdAt DateTime @map("created_at")
   createdBy String? @map("created_by")
   updatedAt DateTime @map("updated_at")
@@ -67,9 +67,10 @@ model Item {
 
 model Uom {
   id String? @id @default(uuid())
-  uomId String? @unique @map("uom_id")
-  code String? @unique
-  name String?
+  uomId String @unique @map("uom_id")
+  code String @unique
+  name String
+  status String? @default("Active")
   createdAt DateTime @map("created_at")
   createdBy String? @map("created_by")
   updatedAt DateTime @map("updated_at")
@@ -80,6 +81,18 @@ model Uom {
   @@map("uoms")
 }
 
+model Inventory {
+  id String? @id @default(uuid())
+  itemId String @map("item_id")
+  warehouseId String @map("warehouse_id")
+  binId String? @map("bin_id")
+  qtyOnHand Decimal @map("qty_on_hand")
+  lastReceivedAt DateTime? @map("last_received_at")
+  lastPoId String? @map("last_po_id")
+
+  @@map("inventories")
+}
+
 model PurchaseOrder {
   id String? @id @default(uuid())
   poId String @unique @map("po_id")
@@ -88,12 +101,14 @@ model PurchaseOrder {
   distributionMethod String @map("distribution_method")
   warehouseId String @map("warehouse_id")
   grandTotal Decimal @map("grand_total")
-  paidAmount Decimal? @default(0) @map("paid_amount")
+  paymentMethod String @map("payment_method")
   status String? @default("submitted")
   createdAt DateTime @map("created_at")
   createdBy String? @map("created_by")
   updatedAt DateTime @map("updated_at")
   updatedBy String? @map("updated_by")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String? @map("deleted_by")
 
   @@map("purchase_orders")
 }
@@ -104,20 +119,21 @@ model PurchaseOrderLineItem {
   itemId String @map("item_id")
   quantity Decimal
   unitPrice Decimal @map("unit_price")
-  totalAmount Decimal? @map("total_amount")
+  totalAmount Decimal @map("total_amount")
 
   @@map("purchase_order_line_items")
 }
 
-model Inventory {
+model PoAttachment {
   id String? @id @default(uuid())
-  itemId String @map("item_id")
-  warehouseId String @map("warehouse_id")
-  binId String? @map("bin_id")
-  qtyOnHand Decimal @map("qty_on_hand")
+  poId String @unique @map("po_id")
+  filePath String @map("file_path")
+  fileType String? @map("file_type")
   createdAt DateTime @map("created_at")
   createdBy String? @map("created_by")
   updatedAt DateTime @map("updated_at")
   updatedBy String? @map("updated_by")
+
+  @@map("po_attachments")
 }
 

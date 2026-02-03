@@ -10,7 +10,7 @@ const itemSchema = z.object({
   brand: z.string().optional(),
   name: z.string(),
   uomId: z.string().uuid(),
-  status: z.string(),
+  status: z.string().optional(),
   createdBy: z.string().uuid().optional(),
   updatedBy: z.string().uuid().optional(),
   deletedAt: z.string().datetime().optional(),

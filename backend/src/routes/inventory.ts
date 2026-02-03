@@ -10,8 +10,8 @@ const inventorySchema = z.object({
   warehouseId: z.string().uuid(),
   binId: z.string().uuid().optional(),
   qtyOnHand: z.number(),
-  createdBy: z.string().uuid().optional(),
-  updatedBy: z.string().uuid().optional(),
+  lastReceivedAt: z.string().datetime().optional(),
+  lastPoId: z.string().uuid().optional(),
 });
 
 // GET all inventory

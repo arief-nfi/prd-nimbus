@@ -6,9 +6,10 @@ const router = Router();
 
 // Validation schema
 const uomSchema = z.object({
-  uomId: z.string().optional(),
-  code: z.string().optional(),
-  name: z.string().optional(),
+  uomId: z.string(),
+  code: z.string(),
+  name: z.string(),
+  status: z.string().optional(),
   createdBy: z.string().uuid().optional(),
   updatedBy: z.string().uuid().optional(),
   deletedAt: z.string().datetime().optional(),

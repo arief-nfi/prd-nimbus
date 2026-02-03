@@ -10,7 +10,7 @@ const purchaseOrderLineItemSchema = z.object({
   itemId: z.string().uuid(),
   quantity: z.number(),
   unitPrice: z.number(),
-  totalAmount: z.number().optional(),
+  totalAmount: z.number(),
 });
 
 // GET all purchase-order-line-item

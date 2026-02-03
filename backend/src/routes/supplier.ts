@@ -11,7 +11,7 @@ const supplierSchema = z.object({
   picName: z.string(),
   address: z.string(),
   phone: z.string(),
-  status: z.string(),
+  status: z.string().optional(),
   createdBy: z.string().uuid().optional(),
   updatedBy: z.string().uuid().optional(),
   deletedAt: z.string().datetime().optional(),
