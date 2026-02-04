@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { SkuGenerationSchema, generateDeterministicSku } from '../validation/sku.validation';
-import { AppError } from '../utils/errors';
+import { AppError } from '../utils/errors.js';
 
 const prisma = new PrismaClient();
 

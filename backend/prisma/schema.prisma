@@ -1,12 +1,155 @@
-// ... existing schema code
+generator client {
+  provider = "prisma-client-js"
+}
 
-model WarehouseNode {
-  id          String   @id @default(uuid())
-  nodeId      String   @unique
-  nodeType    String   @default("Warehouse")
-  unitPrice   Decimal  @db.Decimal(18, 2)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-  @@map("warehouse_nodes")
+model Warehouse {
+  id             String          @id @default(uuid())
+  nodeId         String          @unique @map("node_id")
+  name           String          @unique
+  nodeType       String          @map("node_type")
+  method         String
+  address        String
+  status         String
+  parentId       String?         @map("parent_id")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  createdBy      String?         @map("created_by")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  updatedBy      String?         @map("updated_by")
+  deletedAt      DateTime?       @map("deleted_at")
+  deletedBy      String?         @map("deleted_by")
+  inventories    Inventory[]
+  purchaseOrders PurchaseOrder[]
+  parent         Warehouse?      @relation("WarehouseHierarchy", fields: [parentId], references: [id])
+  children       Warehouse[]     @relation("WarehouseHierarchy")
+
+  @@map("warehouses")
+}
+
+model Supplier {
+  id             String          @id @default(uuid())
+  suppId         String          @unique @map("supp_id")
+  name           String
+  picName        String          @map("pic_name")
+  address        String
+  phone          String
+  email          String?
+  createdAt      DateTime        @default(now()) @map("created_at")
+  createdBy      String?         @map("created_by")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  updatedBy      String?         @map("updated_by")
+  deletedAt      DateTime?       @map("deleted_at")
+  deletedBy      String?         @map("deleted_by")
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model Uom {
+  id          String    @id @default(uuid())
+  uomId       String    @unique @map("uom_id")
+  code        String    @unique
+  name        String
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String?   @map("created_by")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  updatedBy   String?   @map("updated_by")
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+  items       Item[]
+
+  @@map("uoms")
+}
+
+model Item {
+  id                     String                  @id @default(uuid())
+  sku                    String                  @unique
+  name                   String
+  description            String?
+  uomId                  String                  @map("uom_id")
+  unitPrice              Decimal?                @map("unit_price") @db.Decimal(18, 2)
+  createdAt              DateTime                @default(now()) @map("created_at")
+  createdBy              String?                 @map("created_by")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
+  updatedBy              String?                 @map("updated_by")
+  deletedAt              DateTime?               @map("deleted_at")
+  deletedBy              String?                 @map("deleted_by")
+  inventories            Inventory[]
+  uom                    Uom                     @relation(fields: [uomId], references: [id])
+  purchaseOrderLineItems PurchaseOrderLineItem[]
+
+  @@map("items")
+}
+
+model Inventory {
+  id          String    @id @default(uuid())
+  itemId      String    @map("item_id")
+  warehouseId String    @map("warehouse_id")
+  qtyOnHand   Decimal   @map("qty_on_hand") @db.Decimal(18, 2)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String?   @map("created_by")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  item        Item      @relation(fields: [itemId], references: [id])
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+
+  @@unique([itemId, warehouseId])
+  @@map("inventories")
+}
+
+model PurchaseOrder {
+  id                 String                  @id @default(uuid())
+  poId               String                  @unique @map("po_id")
+  poDate             DateTime                @map("po_date")
+  requiredDate       DateTime                @map("required_date")
+  supplierId         String                  @map("supplier_id")
+  distributionMethod String                  @map("distribution_method")
+  warehouseId        String                  @map("warehouse_id")
+  grandTotal         Decimal                 @map("grand_total") @db.Decimal(18, 2)
+  paymentMethod      String                  @map("payment_method")
+  downPaymentAmount  Decimal?                @map("down_payment_amount") @db.Decimal(18, 2)
+  createdAt          DateTime                @default(now()) @map("created_at")
+  createdBy          String?                 @map("created_by")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+  updatedBy          String?                 @map("updated_by")
+  deletedAt          DateTime?               @map("deleted_at")
+  deletedBy          String?                 @map("deleted_by")
+  attachments        PoAttachment[]
+  lineItems          PurchaseOrderLineItem[]
+  supplier           Supplier                @relation(fields: [supplierId], references: [id])
+  warehouse          Warehouse               @relation(fields: [warehouseId], references: [id])
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderLineItem {
+  id            String        @id @default(uuid())
+  poId          String        @map("po_id")
+  itemId        String        @map("item_id")
+  quantity      Decimal       @db.Decimal(18, 2)
+  unitPrice     Decimal       @map("unit_price") @db.Decimal(18, 2)
+  totalAmount   Decimal       @map("total_amount") @db.Decimal(18, 2)
+  item          Item          @relation(fields: [itemId], references: [id])
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+
+  @@map("purchase_order_line_items")
+}
+
+model PoAttachment {
+  id            String        @id @default(uuid())
+  poId          String        @map("po_id")
+  fileName      String        @map("file_name")
+  filePath      String        @map("file_path")
+  fileSize      Int?          @map("file_size")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  createdBy     String?       @map("created_by")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  updatedBy     String?       @map("updated_by")
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+
+  @@map("po_attachments")
 }

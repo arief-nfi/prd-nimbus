@@ -1,4 +1,4 @@
-import { SubmissionSchema, SubmissionInput } from '../../../shared/validation/item-validation.schema';
+import { SubmissionSchema, SubmissionInput } from '../../../shared/validation/item-validation.schema.js';
 import { logger } from '../utils/logger';
 
 export class SubmissionService {

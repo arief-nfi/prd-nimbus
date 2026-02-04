@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { WarehouseSchema } from '../../../shared/validation/warehouse.schema';
+import { WarehouseSchema } from '../../../shared/validation/warehouse.schema.js';
 import { logger } from '../utils/logger';
 
 export const validateWarehouse = (req: Request, res: Response, next: NextFunction) => {

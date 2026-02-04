@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { DocumentUploadSchema } from '../../../shared/validation/document.schema';
+import { DocumentUploadSchema } from '../../../shared/validation/document.schema.js';
 import { logger } from '../utils/logger';
 
 export const validateDocumentRequest = (req: Request, res: Response, next: NextFunction) => {

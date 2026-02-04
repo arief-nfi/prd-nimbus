@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { WarehouseOrderSchema } from '../../../shared/validation/payment-schema';
+import { WarehouseOrderSchema } from '../../../shared/validation/payment-schema.js';
 import { logger } from '../utils/logger';
 
 export const validateWarehouseOrder = async (req: Request, res: Response, next: NextFunction) => {

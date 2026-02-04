@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { DocumentUploadInput } from '../../../shared/validation/document.schema';
+import { DocumentUploadInput } from '../../../shared/validation/document.schema.js';
 
 const prisma = new PrismaClient();
 

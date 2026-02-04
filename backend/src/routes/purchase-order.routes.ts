@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { purchaseOrderSchema } from '../../../shared/validation/purchase-order.schema';
+import { purchaseOrderSchema } from '../../../shared/validation/purchase-order.schema.js';
 import { validateRequest } from '../middleware/validate-request';
 
 const router = Router();

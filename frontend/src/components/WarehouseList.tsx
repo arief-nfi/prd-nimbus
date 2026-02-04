@@ -1,26 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ChevronRight, 
-  ChevronDown, 
-  Plus, 
-  Eye, 
-  Warehouse as WarehouseIcon, 
-  AlertCircle,
-  Loader2
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Warehouse, WarehouseStatus } from '@/types/warehouse';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Box,
+  Button,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+  IconButton,
+  Chip,
+  CircularProgress,
+  Alert,
+  Container,
+} from '@mui/material';
+import {
+  ChevronRight,
+  ExpandMore,
+  Add as AddIcon,
+  Visibility as EyeIcon,
+  Warehouse as WarehouseIcon,
+} from '@mui/icons-material';
+
+interface Warehouse {
+  id: string;
+  nodeId: string;
+  name: string;
+  nodeType: string;
+  address: string;
+  status: string;
+  children?: Warehouse[];
+}
 
 interface WarehouseRowProps {
   warehouse: Warehouse;
@@ -32,63 +45,47 @@ const WarehouseRow: React.FC<WarehouseRowProps> = ({ warehouse, level, onView })
   const [isExpanded, setIsExpanded] = useState(false);
   const hasChildren = warehouse.children && warehouse.children.length > 0;
 
-  const getStatusColor = (status: WarehouseStatus) => {
-    switch (status) {
-      case WarehouseStatus.ACTIVE: return 'bg-green-500/10 text-green-500 hover:bg-green-500/20';
-      case WarehouseStatus.INACTIVE: return 'bg-red-500/10 text-red-500 hover:bg-red-500/20';
-      case WarehouseStatus.MAINTENANCE: return 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20';
-      default: return 'bg-gray-500/10 text-gray-500';
+  const getStatusColor = (status: string): 'success' | 'error' | 'warning' | 'default' => {
+    switch (status.toUpperCase()) {
+      case 'ACTIVE': return 'success';
+      case 'INACTIVE': return 'error';
+      case 'MAINTENANCE': return 'warning';
+      default: return 'default';
     }
   };
 
   return (
     <>
-      <TableRow className="group">
-        <TableCell className="font-medium">
-          <div className="flex items-center" style={{ paddingLeft: `${level * 20}px` }}>
+      <TableRow hover>
+        <TableCell>
+          <Box display="flex" alignItems="center" pl={level * 3}>
             {hasChildren ? (
-              <button 
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="p-1 mr-2 hover:bg-slate-100 rounded-sm transition-colors"
-              >
-                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
+              <IconButton size="small" onClick={() => setIsExpanded(!isExpanded)}>
+                {isExpanded ? <ExpandMore /> : <ChevronRight />}
+              </IconButton>
             ) : (
-              <div className="w-8" />
+              <Box width={40} />
             )}
-            <WarehouseIcon size={18} className="mr-2 text-slate-400" />
-            <span className="truncate max-w-[200px]">{warehouse.name}</span>
-          </div>
+            <WarehouseIcon sx={{ mr: 1, color: 'text.secondary' }} />
+            <Typography variant="body2">{warehouse.name}</Typography>
+          </Box>
         </TableCell>
-        <TableCell className="hidden md:table-cell">{warehouse.nodeId}</TableCell>
+        <TableCell>{warehouse.nodeId}</TableCell>
         <TableCell>
-          <Badge variant="outline">{warehouse.nodeType.replace('_', ' ')}</Badge>
+          <Chip label={warehouse.nodeType} size="small" variant="outlined" />
         </TableCell>
-        <TableCell className="hidden lg:table-cell">{warehouse.method}</TableCell>
+        <TableCell>{warehouse.address}</TableCell>
         <TableCell>
-          <Badge className={getStatusColor(warehouse.status)} variant="secondary">
-            {warehouse.status}
-          </Badge>
+          <Chip label={warehouse.status} size="small" color={getStatusColor(warehouse.status)} />
         </TableCell>
-        <TableCell className="text-right">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => onView(warehouse.id)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            View
-          </Button>
+        <TableCell align="right">
+          <IconButton size="small" onClick={() => onView(warehouse.id)}>
+            <EyeIcon />
+          </IconButton>
         </TableCell>
       </TableRow>
       {isExpanded && hasChildren && warehouse.children?.map((child) => (
-        <WarehouseRow 
-          key={child.id} 
-          warehouse={child} 
-          level={level + 1} 
-          onView={onView} 
-        />
+        <WarehouseRow key={child.id} warehouse={child} level={level + 1} onView={onView} />
       ))}
     </>
   );
@@ -101,89 +98,99 @@ export const WarehouseListScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchWarehouses = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/warehouses?tree=true');
-        if (!response.ok) throw new Error('Failed to fetch warehouse data');
-        const data = await response.json();
-        setWarehouses(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchWarehouses();
   }, []);
 
+  const fetchWarehouses = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/warehouse?tree=true');
+      if (!response.ok) throw new Error('Failed to fetch warehouse data');
+      const data = await response.json();
+      setWarehouses(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleView = (id: string) => {
+    navigate(`/warehouses/${id}`);
+  };
+
+  const handleCreate = () => {
+    navigate('/warehouses/create');
+  };
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[400px] space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Loading warehouse hierarchy...</p>
-      </div>
+      <Container maxWidth="lg" sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <Alert variant="destructive" className="my-6">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Alert severity="error">
+          <Typography variant="h6">Error Loading Warehouses</Typography>
+          <Typography>{error}</Typography>
+        </Alert>
+      </Container>
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">A.7.2 Warehouse List Screen</h1>
-          <p className="text-muted-foreground">Manage your global warehouse hierarchy and storage nodes.</p>
-        </div>
-        <Button onClick={() => navigate('/warehouses/create')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add New
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" component="h1">
+          Warehouses
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleCreate}
+        >
+          Create Warehouse
         </Button>
-      </div>
+      </Box>
 
-      <div className="rounded-md border bg-white shadow-sm">
+      <TableContainer component={Paper}>
         <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead className="w-[300px]">Node Name</TableHead>
-              <TableHead className="hidden md:table-cell">Node ID</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="hidden lg:table-cell">Method</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Node ID</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Address</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell align="right">Actions</TableCell>
             </TableRow>
-          </TableHeader>
+          </TableHead>
           <TableBody>
             {warehouses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                  No warehouses found. Click 'Add New' to create one.
+                <TableCell colSpan={6} align="center">
+                  <Typography color="textSecondary" py={4}>
+                    No warehouses found. Click "Create Warehouse" to add one.
+                  </Typography>
                 </TableCell>
               </TableRow>
             ) : (
               warehouses.map((warehouse) => (
-                <WarehouseRow 
-                  key={warehouse.id} 
-                  warehouse={warehouse} 
-                  level={0} 
-                  onView={(id) => navigate(`/warehouses/view/${id}`)} 
+                <WarehouseRow
+                  key={warehouse.id}
+                  warehouse={warehouse}
+                  level={0}
+                  onView={handleView}
                 />
               ))
             )}
           </TableBody>
         </Table>
-      </div>
-    </div>
+      </TableContainer>
+    </Container>
   );
 };
-
-export default WarehouseListScreen;

@@ -1,8 +1,31 @@
 import { PrismaClient } from '@prisma/client';
-import { itemSchema, ItemInput } from '../../../shared/validation/sku.schema';
-import { AppError } from '../utils/errors';
+import { z } from 'zod';
+import { AppError } from '../utils/errors.js';
 
 const prisma = new PrismaClient();
+
+// VR-011: SKU validation schema
+const CONSONANT_REGEX = /^[BCDFGHJKLMNPQRSTVWXYZ]{3}-[0-9]{4}$/;
+
+const skuSchema = z.string({
+  required_error: "SKU is required",
+})
+.trim()
+.toUpperCase()
+.regex(CONSONANT_REGEX, {
+  message: "SKU must follow the format: 3 uppercase consonants followed by a hyphen and 4 digits (e.g., KMN-0001)"
+});
+
+const itemSchema = z.object({
+  id: z.string().uuid().optional(),
+  sku: skuSchema,
+  brand: z.string().min(1, "Brand is required").nullable().optional(),
+  name: z.string().min(1, "Item name is required"),
+  uomId: z.string().uuid("Invalid UOM selection"),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'ARCHIVED']).default('ACTIVE'),
+});
+
+export type ItemInput = z.infer<typeof itemSchema>;
 
 export class ItemService {
   /**

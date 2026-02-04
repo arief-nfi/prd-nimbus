@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { PurchaseOrderSchema, UpdatePurchaseOrderSchema } from '../../../shared/validation/purchaseOrder.schema';
-import { AppError } from '../utils/errors';
+import { PurchaseOrderSchema, UpdatePurchaseOrderSchema } from '../../../shared/validation/purchaseOrder.schema.js';
+import { AppError } from '../utils/errors.js';
 
 const prisma = new PrismaClient();
 

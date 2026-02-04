@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { paymentValidationSchema } from '../../../shared/validation/payment-schema';
+import { paymentValidationSchema } from '../../../shared/validation/payment-schema.js';
 import { ZodError } from 'zod';
 
 export const validatePaymentRequest = (req: Request, res: Response, next: NextFunction) => {

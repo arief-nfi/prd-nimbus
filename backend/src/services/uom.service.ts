@@ -1,5 +1,10 @@
 import { PrismaClient } from '@prisma/client';
-import { StatusEnum } from '../../../shared/validation/uom.schema';
+
+// Copy of StatusEnum from shared/validation/uom.schema.ts
+export enum StatusEnum {
+  Active = 'Active',
+  Inactive = 'Inactive'
+}
 
 const prisma = new PrismaClient();
 

@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { validateRequest } from '../middleware/validate-request';
-2import { TaxValidationSchema } from '../../../shared/validation/tax-schema';
+import { validateRequest } from '../middleware/validate-request.js';
+import { TaxValidationSchema } from '../../../shared/validation/tax-schema.js';
 
 const router = Router();
 
